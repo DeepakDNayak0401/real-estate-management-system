@@ -1,6 +1,29 @@
-// Notify Admin via Brevo
-const adminEmail = process.env.EMAIL_USER;
-const adminMessage = `
+import Contact from "../models/contact.model.js";
+import sendEmail from "../utils/sendEmail.js";
+
+
+//to create a new contact
+export const createContact = async (req, res) => {
+    try {
+        const { name, email, phone, role, message } = req.body;
+        const contact = new Contact({
+            name,
+            email,
+            phone,
+            role,
+            message
+        });
+        await contact.save();
+
+        // Notify Admin via Brevo
+        const adminEmail = process.env.EMAIL_USER;
+        console.log("Admin email:", adminEmail); // Add this temporarily
+
+        if (!adminEmail) {
+            console.error("EMAIL_USER is not defined in .env");
+        }
+
+        const adminMessage = `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #1e293b;">
                 <h2 style="color: #0d9488;">New Contact Request</h2>
                 <p>You have received a new message from the platform.</p>
@@ -15,3 +38,35 @@ const adminMessage = `
                 </div>
             </div>
         `;
+        try {
+            await sendEmail({
+                email: adminEmail,
+                subject: "New Contact Request from " + name,
+                message: adminMessage
+            });
+        } catch (error) {
+            console.error("Error sending email:", error.message);
+        }
+
+        res.status(201).json({ message: "Contact created successfully", contact, success: true });
+
+    } catch (error) {
+        console.error("Error creating contact:", error.message);
+        res.status(500).json({ message: "Error creating contact", error, success: false });
+    }
+}
+
+
+//to get all contacts (Admin only)
+export const getAllContacts = async (req, res) => {
+    try {
+        const contacts = await Contact.find().sort({ createdAt: -1 });
+        res.status(200).json({ contacts, success: true });
+    } catch (error) {
+        console.error("Error retrieving contacts:", error.message);
+        res.status(500).json({ message: "Error retrieving contacts", error, success: false });
+    }
+}
+
+
+

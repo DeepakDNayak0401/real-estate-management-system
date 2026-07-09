@@ -1,5 +1,5 @@
 import Property from "../models/property.model.js";
-import Inquiry from "../models/inquriry.model.js";
+import Inquiry from "../models/inquiry.model.js";
 
 //Add a property
 export const addProperty = async (req, res) => {

@@ -33,8 +33,9 @@ export const registerUser = async (req, res) => {
                 subject: "Account Verification - Real Estate Platform",
                 message: `
                     <h2>Welcome to Real Estate Platform</h2>
-                    <p>Thank you for registering. Please click the link below to verify your email address:</p>
-                    <a href="http://localhost:5173/verify-email/${verificationToken}" clicktracking="off">Verify Email</a>
+                    <p>Thank you for registering.</p>
+                    <p><strong>Verification Code:</strong> ${verificationToken}</p>
+                    <p>This code will expire in 15 minutes.</p>
                 `
             });
         } catch (error) {
