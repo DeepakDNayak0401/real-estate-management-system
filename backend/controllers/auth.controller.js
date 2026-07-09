@@ -30,9 +30,9 @@ export const registerUser = async (req, res) => {
         try {
             await sendEmail({
                 email: user.email,
-                subject: "Account Verification - Real Estate Platform",
+                subject: "Account Verification - Nestify",
                 message: `
-                    <h2>Welcome to Real Estate Platform</h2>
+                    <h2>Welcome to Nestify</h2>
                     <p>Thank you for registering.</p>
                     <p><strong>Verification Code:</strong> ${verificationToken}</p>
                     <p>This code will expire in 15 minutes.</p>
@@ -179,7 +179,7 @@ export const forgotPassword = async (req, res) => {
         try {
             await sendEmail({
                 email: user.email,
-                subject: "Password Reset - Real Estate Platform",
+                subject: "Password Reset - Nestify",
                 message,
             });
             res.status(200).json({ message: "Password reset email sent", success: true });

@@ -1,13 +1,16 @@
-import React from 'react'
+import { BrowserRouter } from 'react-router-dom'
+import { AuthProvider } from './context/AuthContext.jsx'
+import { ToastProvider } from './context/ToastContext.jsx'
+import AppRoutes from './routes/AppRoutes.jsx'
 
-const App = () => {
+export default function App() {
   return (
-    <div>
-       <h1 className="text-3xl font-bold underline">
-    Hello world!
-  </h1>
-    </div>
+    <BrowserRouter>
+      <AuthProvider>
+        <ToastProvider>
+          <AppRoutes />
+        </ToastProvider>
+      </AuthProvider>
+    </BrowserRouter>
   )
 }
-
-export default App

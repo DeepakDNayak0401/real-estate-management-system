@@ -1,5 +1,9 @@
 import Property from "../models/property.model.js";
 import Inquiry from "../models/inquiry.model.js";
+// ✅ FIX: Added missing imports for Cloudinary and JWT
+import uploadToCloudinary from "../utils/uploadToCloudinary.js";
+import cloudinary from "../config/cloudinary.js";
+import jwt from "jsonwebtoken";
 
 //Add a property
 export const addProperty = async (req, res) => {
@@ -41,7 +45,6 @@ export const addProperty = async (req, res) => {
         });
 
         res.status(201).json({ message: "Property added successfully", property: property, success: true });
-
     } catch (err) {
         console.error("Error in addProperty:", err);
         res.status(500).json({ message: err.message, success: false });
@@ -92,6 +95,7 @@ export const updateProperty = async (req, res) => {
             "status",
             "amenities",
         ];
+
         fields.forEach((field) => {
             if (req.body[field] !== undefined) {
                 if (field === "amenities" && typeof req.body[field] === "string") {
@@ -118,7 +122,7 @@ export const updateProperty = async (req, res) => {
         if (req.files && req.files.length > 0) {
             let newImages = [];
             for (let file of req.files) {
-                const result = await uploadToCloudinary(file.buffer, "properties");
+                const result = await uploadToCloudinary(file.buffer, "property_images");
                 newImages.push(result.secure_url);
             }
             property.images = [...property.images, ...newImages];
@@ -183,14 +187,17 @@ export const updatePropertyStatus = async (req, res) => {
         if (!property) {
             return res.status(404).json({ message: "Property not found", success: false });
         }
+
         if (property.seller.toString() !== req.user._id.toString()) {
             return res.status(403).json({
                 success: false,
                 message: "Not authorized",
             });
         }
+
         property.status = req.body.status;
         await property.save();
+
         res.json({
             success: true,
             message: "Property status updated",
@@ -200,7 +207,6 @@ export const updatePropertyStatus = async (req, res) => {
         res.status(500).json({ message: err.message, success: false });
     }
 }
-
 
 //to get all properties
 export const getAllProperties = async (req, res) => {
@@ -232,6 +238,7 @@ export const getAllProperties = async (req, res) => {
         if (propertyType) {
             query.propertyType = { $in: propertyType.toLowerCase().split(",") };
         }
+
         if (bhk) {
             if (bhk === "5+") {
                 query.bhk = { $gte: "5" };
@@ -239,12 +246,14 @@ export const getAllProperties = async (req, res) => {
                 query.bhk = bhk;
             }
         }
+
         if (furnishing) {
             const furnishingArray = furnishing.split(",");
             query.furnishing = {
                 $in: furnishingArray.map((f) => new RegExp(`^${f.trim()}$`, "i")),
             };
         }
+
         if (status) query.status = status;
 
         if (minPrice || maxPrice) {
@@ -283,7 +292,6 @@ export const getAllProperties = async (req, res) => {
     }
 };
 
-
 //to get property details
 export const getPropertyDetails = async (req, res) => {
     try {
@@ -300,14 +308,15 @@ export const getPropertyDetails = async (req, res) => {
         if (authHeader && authHeader.startsWith("Bearer ")) {
             try {
                 const token = authHeader.split(" ")[1];
+                // ✅ FIX: jwt is now imported at the top of the file
                 const decoded = jwt.verify(token, process.env.JWT_SECRET);
                 visitorId = decoded.id;
             } catch (err) {
                 console.error("Error decoding token:", err);
             }
         }
-        const isSeller = visitorId === property.seller._id.toString();
 
+        const isSeller = visitorId === property.seller._id.toString();
         if (!isSeller && !property.viewedBy.includes(visitorId)) {
             property.views += 1;
             property.viewedBy.push(visitorId);
@@ -338,20 +347,23 @@ export const getPropertyDetails = async (req, res) => {
     }
 }
 
-
 //seller dashboard stats
 export const getSellerDashboardStats = async (req, res) => {
     try {
         const sellerId = req.user._id;
+
         const totalProperties = await Property.countDocuments({ seller: sellerId });
         const activeListings = await Property.countDocuments({ seller: sellerId, status: "sale" });
         const soldProperties = await Property.countDocuments({ seller: sellerId, status: "sold" });
+
         const totalInquiries = await Inquiry.countDocuments({ property: { $in: await Property.find({ seller: sellerId }).distinct('_id') } });
+
         const totalViews = await Property.aggregate([
             { $match: { seller: sellerId } },
             { $group: { _id: null, totalViews: { $sum: "$views" } } }
         ]);
         const totalViewsCount = totalViews.length > 0 ? totalViews[0].totalViews : 0;
+
         res.json({
             success: true,
             stats: {
