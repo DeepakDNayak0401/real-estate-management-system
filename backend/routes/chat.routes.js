@@ -37,8 +37,8 @@ chatRouter.post("/", async (req, res) => {
             });
         }
         chat = await Chat.findById(chat._id)
-            .populate("buyer", "name email profileImage")
-            .populate("seller", "name email profileImage")
+            .populate("buyer", "name email profilePic")
+            .populate("seller", "name email profilePic")
             .populate("property", "title price location images");
 
         res.status(200).json({ chat, success: true });
@@ -89,8 +89,8 @@ chatRouter.get("/", async (req, res) => {
         const userId = req.user.id;
         const chats = await Chat.find({
             $or: [{ buyer: userId }, { seller: userId }]
-        }).populate("buyer", "name email profileImage")
-            .populate("seller", "name email profileImage")
+        }).populate("buyer", "name email profilePic")
+            .populate("seller", "name email profilePic")
             .populate("property", "title price location images")
             .sort({ updatedAt: -1 });
         res.status(200).json({ chats, success: true });
@@ -106,7 +106,7 @@ chatRouter.get("/:chatId", async (req, res) => {
         const chat = await Chat.findById(req.params.chatId)
             .populate(
                 "messages.sender",
-                "name profileImage"
+                "name profilePic"
             );
 
         if (!chat) {
